@@ -1,8 +1,63 @@
+import asyncHandler from 'express-async-handler'
+import { OAuth2Client } from 'google-auth-library'
 import validator from "validator";
 import userModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+
+const authUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body
+
+    const user = await User.findOne({ email })
+
+    if (user && (await user.matchPassword(password))) {
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            token: generateToken(user._id),
+        })
+    } else {
+        res.status(401)
+        throw new Error('Invalid email or password')
+    }
+})
+
+
+const googleLogin = asyncHandler(async (req, res) => {
+    const { token } = req.body
+
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+    })
+
+    const { email, name, picture } = ticket.getPayload()
+
+    let user = await User.findOne({ email })
+
+    if (!user) {
+        user = await User.create({
+            name,
+            email,
+            password: Math.random().toString(36).slice(-8), // Generate a random password
+            avatar: picture,
+            googleId: ticket.getUserId(),
+        })
+    }
+
+    res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+        avatar: user.avatar,
+    })
+})
 const createToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET)
 }
@@ -23,7 +78,7 @@ const loginUser = async (req, res) => {
         else {
 
 
-            
+
             res.json({ success: false, message: "Invalid Credentials!" })
         }
     } catch (error) {
@@ -74,20 +129,20 @@ const registerUser = async (req, res) => {
 
 // Admin Route
 const adminLogin = async (req, res) => {
-    try{
-        const{email,password}=req.body
-        if(email===process.env.ADMIN_EMAIL && password===process.env.ADMIN_PASSWORD){
-            const token=jwt.sign(email+password,process.env.JWT_SECRET);
-            res.json({success:true,token})
+    try {
+        const { email, password } = req.body
+        if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+            const token = jwt.sign(email + password, process.env.JWT_SECRET);
+            res.json({ success: true, token })
         }
-        else{
-            res.json({success:false,message:"Invalid Admin Credentials"});
+        else {
+            res.json({ success: false, message: "Invalid Admin Credentials" });
         }
-    } catch (error){
+    } catch (error) {
         console.log(error);
-        res.json({success:false,message:error.message});
+        res.json({ success: false, message: error.message });
 
     }
 }
 
-export { loginUser, registerUser, adminLogin }
+export { loginUser, registerUser, adminLogin, googleLogin, }
