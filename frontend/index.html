@@ -8,13 +8,21 @@
   <title>BoldBuy</title>
   <link rel="stylesheet" href="./src/index.css" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JG3PML8RYB"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
+    gtag('config', 'G-JG3PML8RYB');
+  </script>
 </head>
 
 <body>
   <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script> 
+  <script type="module" src="/src/main.jsx"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </body>
 
-</html> 
+</html>
