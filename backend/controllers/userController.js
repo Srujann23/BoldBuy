@@ -23,7 +23,7 @@ const loginUser = async (req, res) => {
         else {
 
 
-            
+
             res.json({ success: false, message: "Invalid Credentials!" })
         }
     } catch (error) {
@@ -74,20 +74,34 @@ const registerUser = async (req, res) => {
 
 // Admin Route
 const adminLogin = async (req, res) => {
-    try{
-        const{email,password}=req.body
-        if(email===process.env.ADMIN_EMAIL && password===process.env.ADMIN_PASSWORD){
-            const token=jwt.sign(email+password,process.env.JWT_SECRET);
-            res.json({success:true,token})
+    try {
+        const { email, password } = req.body
+        if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+            const token = jwt.sign(email + password, process.env.JWT_SECRET);
+            res.json({ success: true, token })
         }
-        else{
-            res.json({success:false,message:"Invalid Admin Credentials"});
+        else {
+            res.json({ success: false, message: "Invalid Admin Credentials" });
         }
-    } catch (error){
+    } catch (error) {
         console.log(error);
-        res.json({success:false,message:error.message});
+        res.json({ success: false, message: error.message });
 
     }
 }
 
-export { loginUser, registerUser, adminLogin }
+
+//User Profile
+const getUserProfile = async (req, res) => {
+    try {
+        const user = req.user;
+        res.json({ success: true, user: { name: user.name, email: user.email } });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+
+
+export { loginUser, registerUser, adminLogin, getUserProfile }
