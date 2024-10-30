@@ -2,14 +2,12 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 import ProductItem from './ProductItem';
-
-
+import { useLocation } from 'react-router-dom';
 
 const RelatedProducts = ({ category, subCategory }) => {
-
-
     const { products } = useContext(ShopContext);
-    const [related, setRealted] = useState([]);
+    const [related, setRelated] = useState([]);
+    const location = useLocation();
 
     useEffect(() => {
         if (products.length > 0) {
@@ -17,9 +15,21 @@ const RelatedProducts = ({ category, subCategory }) => {
             productsCopy = productsCopy.filter((item) => category === item.category);
             productsCopy = productsCopy.filter((item) => subCategory === item.subCategory);
 
-            setRealted(productsCopy.slice(0, 5));
+            setRelated(productsCopy.slice(0, 5));
         }
-    }, [products])
+    }, [products, category, subCategory])
+
+    useEffect(() => {
+        const smoothScroll = () => {
+            window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
+        };
+
+        smoothScroll();
+    }, [location]);
 
     return (
         <div className='my-24'>
@@ -36,4 +46,5 @@ const RelatedProducts = ({ category, subCategory }) => {
         </div>
     )
 }
+
 export default RelatedProducts;
