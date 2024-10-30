@@ -15,10 +15,11 @@ import SearchBar from './components/SearchBar'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Verify from './pages/Verify'
-
+import { Analytics } from '@vercel/analytics/react';
 const App = () => {
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
+      <Analytics />
       <ToastContainer />
       <Navbar/>
       <SearchBar />
