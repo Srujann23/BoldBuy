@@ -16,23 +16,7 @@ const ShopContextProvider = (props) => {
     const [cartItems, setCartItems] = useState({});
     const [products, setProducts] = useState([]);
     const [token, setToken] = useState('');
-    const [userName, setUserName] = useState('');
     const navigate = useNavigate();
-
-
-    const getUserData = async (token) => {
-        try {
-            const response = await axios.get(backendUrl + '/api/user/profile', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                setUserName(response.data.user.name);
-            }
-        } catch (error) {
-            console.log(error);
-            toast.error(error.response?.data?.message || 'Failed to fetch user data');
-        }
-    }
 
     const addToCart = async (itemId, size) => {
         if (!size) {
@@ -133,11 +117,8 @@ const ShopContextProvider = (props) => {
 
     useEffect(() => {
         if (!token && localStorage.getItem('token')) {
-           const storedToken = localStorage.getItem('token');
-            setToken(storedToken);
-            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-            getUserCart(storedToken);
-            getUserData(storedToken);
+            setToken(localStorage.getItem('token'));
+            getUserCart(localStorage.getItem('token'));
         }
     })
 
@@ -169,8 +150,7 @@ const ShopContextProvider = (props) => {
         getCartCount, updateQuantity,
         getCartAmount, navigate,
         backendUrl,
-        setToken, token,
-        userName,setUserName
+        setToken, token
     }
 
     return (
