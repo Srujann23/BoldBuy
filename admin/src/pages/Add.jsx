@@ -20,6 +20,10 @@ const Add = ({ token }) => {
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    if (sizes.length === 0) {
+      toast.error("Please select at least one size.");
+      return;
+    }
     try {
       const formData = new FormData();
       formData.append("name", name);
@@ -38,7 +42,7 @@ const Add = ({ token }) => {
 
       const response = await axios.post(backendUrl + "/api/product/add", formData, { headers: { token } });
       // console.log(response.config.headers);
-      if(response.data.success){
+      if (response.data.success) {
         toast.success(response.data.message);
         setName('');
         setDescription('');
@@ -48,14 +52,14 @@ const Add = ({ token }) => {
         setImage4(false);
         setPrice('');
         setStock('');
-      } 
-      else{
+      }
+      else {
         toast.error(response.data.message);
       }
-      
+
     } catch (error) {
       console.log(error)
-      toast.error(error.message); 
+      toast.error(error.message);
 
     }
   };
@@ -136,6 +140,7 @@ const Add = ({ token }) => {
             className='w-full px-3 py-2 sm:w-[120px]'
             type="number"
             placeholder='Enter Price'
+            required
           />
         </div>
         <div>
@@ -146,6 +151,7 @@ const Add = ({ token }) => {
             className='w-full px-3 py-2 sm:w-[120px]'
             type="number"
             placeholder='Enter Stock'
+            required
           />
         </div>
       </div>
