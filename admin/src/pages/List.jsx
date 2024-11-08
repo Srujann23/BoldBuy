@@ -5,6 +5,7 @@ import { currency } from '../App';
 import { toast } from 'react-toastify';
 import ImageModal from '../components/ImageModal';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { ArrowUpDown } from 'lucide-react'
 
 const List = ({ token }) => {
     const [list, setList] = useState([]);
@@ -17,9 +18,12 @@ const List = ({ token }) => {
     const [maxPrice, setMaxPrice] = useState("");
     const [minStock, setMinStock] = useState("");
     const [maxStock, setMaxStock] = useState("");
+    const [minSold, setMinSold] = useState("");
+    const [maxSold, setMaxSold] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedImages, setSelectedImages] = useState([]);
-    const [productToDelete, setProductToDelete] = useState(null);  // Store the product ID to be deleted
+    const [productToDelete, setProductToDelete] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' })
 
 
     const itemsPerPage = 10;
@@ -73,15 +77,16 @@ const List = ({ token }) => {
         setIsModalOpen(false);
     };
 
+    
     useEffect(() => {
         fetchList();
     }, []);
-
+    
     const handleCategoryChange = (e) => {
         setSelectedCategory(e.target.value);
         setCurrentPage(1);
     };
-
+    
     const handleSubCategoryChange = (e) => {
         setSelectedSubCategory(e.target.value);
         setCurrentPage(1);
@@ -93,14 +98,20 @@ const List = ({ token }) => {
         else if (name === "maxPrice") setMaxPrice(value);
         setCurrentPage(1);
     };
-
+    
     const handleStockChange = (e) => {
         const { name, value } = e.target;
         if (name === "minStock") setMinStock(value);
         else if (name === "maxStock") setMaxStock(value);
         setCurrentPage(1);
     };
-
+    const handleSoldChange = (e) => {
+        const { name, value } = e.target;
+        if (name === "minSold") setMinSold(value);
+        else if (name === "maxSold") setMaxSold(value);
+        setCurrentPage(1);
+    };
+    
     const filteredList = list.filter(item => {
         const categoryMatch = selectedCategory === "All" || item.category === selectedCategory;
         const subCategoryMatch = selectedSubCategory === "All" || item.subCategory === selectedSubCategory;
@@ -108,16 +119,42 @@ const List = ({ token }) => {
             (!minPrice || item.price >= parseFloat(minPrice)) &&
             (!maxPrice || item.price <= parseFloat(maxPrice));
         const stockMatch =
-            (!minStock || item.stock >= parseInt(minStock)) &&
-            (!maxStock || item.stock <= parseInt(maxStock));
-        return categoryMatch && subCategoryMatch && priceMatch && stockMatch;
+        (!minStock || item.stock >= parseInt(minStock)) &&
+        (!maxStock || item.stock <= parseInt(maxStock));
+        const soldMatch =
+        (!minSold || item.sold >= parseInt(minSold)) &&
+        (!maxSold || item.sold <= parseInt(maxSold));
+        return categoryMatch && subCategoryMatch && priceMatch && stockMatch && soldMatch;
     });
+    const sortedList = React.useMemo(() => {
+        let sortableItems = [...filteredList]
+        if (sortConfig.key !== null) {
+          sortableItems.sort((a, b) => {
+            if (a[sortConfig.key] < b[sortConfig.key]) {
+              return sortConfig.direction === 'ascending' ? -1 : 1
+            }
+            if (a[sortConfig.key] > b[sortConfig.key]) {
+              return sortConfig.direction === 'ascending' ? 1 : -1
+            }
+            return 0
+          })
+        }
+        return sortableItems
+      }, [filteredList, sortConfig])
+    
+      const requestSort = (key) => {
+        let direction = 'ascending'
+        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+          direction = 'descending'
+        }
+        setSortConfig({ key, direction })
+      }
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = sortedList.slice(indexOfFirstItem, indexOfLastItem);
 
-    const totalPages = Math.ceil(filteredList.length / itemsPerPage);
+    const totalPages = Math.ceil(sortedList.length / itemsPerPage);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -166,7 +203,6 @@ const List = ({ token }) => {
                 placeholder="Min"
                 className="p-2 border rounded-md w-24"
             />
-            <span className="font-semibold">to</span>
             <input
                 type="number"
                 name="maxPrice"
@@ -189,7 +225,6 @@ const List = ({ token }) => {
                 placeholder="Min"
                 className="p-2 border rounded-md w-24"
             />
-            <span className="font-semibold">to</span>
             <input
                 type="number"
                 name="maxStock"
@@ -200,23 +235,52 @@ const List = ({ token }) => {
             />
         </div>
     </div>
+
+    <div className="flex flex-col">
+        <label className="font-semibold mb-1">Sold Range:</label>
+        <div className="flex gap-2">
+            <input
+                type="number"
+                name="minSold"
+                value={minSold}
+                onChange={handleSoldChange}
+                placeholder="Min"
+                className="p-2 border rounded-md w-24"
+            />
+            <input
+                type="number"
+                name="maxSold"
+                value={maxSold}
+                onChange={handleSoldChange}
+                placeholder="Max"
+                className="p-2 border rounded-md w-24"
+            />
+        </div>
+    </div>
 </div>
 
 
             <div className='flex flex-col gap-4'>
-                <div className='hidden md:grid grid-cols-[100px_2fr_1fr_1fr_1fr_1fr_80px] items-center py-2 px-4 border-b bg-gray-200 text-sm font-semibold'>
+                <div className='hidden md:grid grid-cols-[100px_2fr_1fr_1fr_1fr_1fr_1fr_80px] items-center py-2 px-4 border-b bg-gray-200 text-sm font-semibold'>
                     <span>Image</span>
                     <span>Name</span>
                     <span>Category</span>
                     <span>Subcategory</span>
-                    <span>Price</span>
-                    <span>Stock</span>
+                    <button onClick={() => requestSort('price')} className="flex items-center">
+            Price <ArrowUpDown className="ml-1 h-4 w-4" />
+          </button>
+          <button onClick={() => requestSort('stock')} className="flex items-center">
+            Stock <ArrowUpDown className="ml-1 h-4 w-4" />
+          </button>
+          <button onClick={() => requestSort('sold')} className="flex items-center">
+            Sold <ArrowUpDown className="ml-1 h-4 w-4" />
+          </button>
                     <span className='text-center'>Action</span>
                 </div>
 
                 {currentItems.map((item, index) => (
                     <div
-                        className='grid md:grid-cols-[100px_2fr_1fr_1fr_1fr_1fr_80px] grid-cols-1 items-start gap-4 py-3 px-4 border rounded-md shadow-sm text-sm bg-white'
+                        className='grid md:grid-cols-[100px_2fr_1fr_1fr_1fr_1fr_1fr_80px] grid-cols-1 items-start gap-4 py-3 px-4 border rounded-md shadow-sm text-sm bg-white'
                         key={index}
                     >
                         <div className='flex justify-center md:justify-start'>
@@ -234,6 +298,7 @@ const List = ({ token }) => {
                             <p>{item.subCategory}</p>
                             <p>{currency}{item.price}</p>
                             <p>{item.stock}</p>
+                            <p>{item.sold}</p>
                         </div>
 
                         <p className='hidden md:block truncate'>{item.name}</p>
@@ -241,6 +306,7 @@ const List = ({ token }) => {
                         <p className='hidden md:block'>{item.subCategory}</p>
                         <p className='hidden md:block'>{currency}{item.price}</p>
                         <p className='hidden md:block'>{item.stock}</p>
+                        <p className='hidden md:block'>{item.sold}</p>
                         <p
                             onClick={() => setProductToDelete(item._id)}  // Set the product ID to delete
                             className='text-red-500 font-bold hover:text-red-700 cursor-pointer'

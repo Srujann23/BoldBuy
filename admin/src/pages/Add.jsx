@@ -67,7 +67,7 @@ const Add = ({ token }) => {
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col w-full items-start gap-3'>
       <div>
-        <p className='mb-2'>Upload Image</p>
+        <p className='mb-2'>Upload Images</p>
         <div className='flex gap-2'>
           {[image1, image2, image3, image4].map((image, index) => (
             <label key={index} htmlFor={`image${index + 1}`}>
@@ -115,46 +115,50 @@ const Add = ({ token }) => {
           required
         />
       </div>
-      <div className='flex flex-col sm:flex-row gap-2 w-full sm:gap-8'>
-        <div>
-          <p className='mb-2'>Product Category</p>
-          <select onChange={(e) => setCategory(e.target.value)} className='w-full px-3 py-2'>
-            <option value="Men">Men</option>
-            <option value="Women">Women</option>
-            <option value="Kids">Kids</option>
-          </select>
-        </div>
-        <div>
-          <p className='mb-2'>Sub Category</p>
-          <select onChange={(e) => setSubCategory(e.target.value)} className='w-full px-3 py-2'>
-            <option value="Topwear">Topwear</option>
-            <option value="Bottomwear">Bottomwear</option>
-            <option value="Winterwear">Winterwear</option>
-          </select>
-        </div>
-        <div>
-          <p>Product Price</p>
-          <input
-            onChange={(e) => setPrice(e.target.value)}
-            value={price}
-            className='w-full px-3 py-2 sm:w-[120px]'
-            type="number"
-            placeholder='Enter Price'
-            required
-          />
-        </div>
-        <div>
-          <p>Product Stock Available</p>
-          <input
-            onChange={(e) => setStock(e.target.value)}
-            value={stock}
-            className='w-full px-3 py-2 sm:w-[120px]'
-            type="number"
-            placeholder='Enter Stock'
-            required
-          />
-        </div>
-      </div>
+      <div className='flex flex-col sm:flex-row gap-4 w-full'>
+  <div className="flex-1 sm:max-w-xs">
+    <p className='mb-1 font-semibold'>Product Category</p>
+    <select onChange={(e) => setCategory(e.target.value)} className='w-full px-3 py-2 border rounded-md'>
+      <option value="Men">Men</option>
+      <option value="Women">Women</option>
+      <option value="Kids">Kids</option>
+    </select>
+  </div>
+
+  <div className="flex-1 sm:max-w-xs">
+    <p className='mb-1 font-semibold'>Sub Category</p>
+    <select onChange={(e) => setSubCategory(e.target.value)} className='w-full px-3 py-2 border rounded-md'>
+      <option value="Topwear">Topwear</option>
+      <option value="Bottomwear">Bottomwear</option>
+      <option value="Winterwear">Winterwear</option>
+    </select>
+  </div>
+
+  <div className="flex-1 sm:max-w-xs">
+    <p className='mb-1 font-semibold'>Product Price</p>
+    <input
+      onChange={(e) => setPrice(e.target.value)}
+      value={price}
+      className='w-full px-3 py-2 border rounded-md'
+      type="number"
+      placeholder='Enter Price'
+      required
+    />
+  </div>
+
+  <div className="flex-1 sm:max-w-xs">
+    <p className='mb-1 font-semibold'>Product Stock Available</p>
+    <input
+      onChange={(e) => setStock(e.target.value)}
+      value={stock}
+      className='w-full px-3 py-2 border rounded-md'
+      type="number"
+      placeholder='Enter Stock'
+      required
+    />
+  </div>
+</div>
+
       <div>
         <p className='mb-2'>Product Sizes</p>
         <div className='flex flex-wrap gap-3'>
