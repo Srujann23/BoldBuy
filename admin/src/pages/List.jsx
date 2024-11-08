@@ -133,18 +133,19 @@ const List = ({ token }) => {
 
             <div className='flex flex-col gap-4'>
                 {/* Table Header for large screens */}
-                <div className='hidden md:grid grid-cols-[100px_2fr_1fr_1fr_80px] items-center py-2 px-4 border-b bg-gray-200 text-sm font-semibold'>
+                <div className='hidden md:grid grid-cols-[100px_2fr_1fr_1fr_1fr_80px] items-center py-2 px-4 border-b bg-gray-200 text-sm font-semibold'>
                     <span>Image</span>
                     <span>Name</span>
                     <span>Category</span>
                     <span>Price</span>
+                    <span>Stock</span>
                     <span className='text-center'>Action</span>
                 </div>
                 
                 {/* Product List */}
                 {currentItems.map((item, index) => (
                     <div
-                        className='grid md:grid-cols-[100px_2fr_1fr_1fr_80px] grid-cols-1 items-start gap-4 py-3 px-4 border rounded-md shadow-sm text-sm bg-white'
+                        className='grid md:grid-cols-[100px_2fr_1fr_1fr_1fr_80px] grid-cols-1 items-start gap-4 py-3 px-4 border rounded-md shadow-sm text-sm bg-white'
                         key={index}
                     >
                         {/* Image */}
@@ -156,11 +157,13 @@ const List = ({ token }) => {
                             <p className='font-bold'>{item.name}</p>
                             <p className='text-gray-600'>{item.category}</p>
                             <p>{currency}{item.price}</p>
+                            <p>{item.stock}</p>
                         </div>
                         {/* For larger screens */}
                         <p className='hidden md:block truncate'>{item.name}</p>
                         <p className='hidden md:block'>{item.category}</p>
                         <p className='hidden md:block'>{currency}{item.price}</p>
+                        <p className='hidden md:block'>{item.stock}</p>
                         {/* Action button */}
                         <p
                             onClick={() => removeProduct(item._id)}
