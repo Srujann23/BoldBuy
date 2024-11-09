@@ -82,7 +82,39 @@ const singleProduct = async (req, res) => {
 }
 
 const editProduct = async (req, res) => {
+    try {
+        const { id, name, description, price, category, subCategory, sizes, bestseller, stock, sold } = req.body;
 
-}
+        // Find the existing product
+        const existingProduct = await ProductModel.findById(id);
+        if (!existingProduct) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        // Prepare updated product data
+        const updatedProductData = {
+            name: name || existingProduct.name,
+            description: description || existingProduct.description,
+            price: price ? Number(price) : existingProduct.price,
+            category: category || existingProduct.category,
+            subCategory: subCategory || existingProduct.subCategory,
+            bestseller: bestseller !== undefined ? bestseller === 'true' : existingProduct.bestseller,
+            sizes: sizes ? JSON.parse(sizes) : existingProduct.sizes,
+            stock: stock ? Number(stock) : existingProduct.stock,
+            sold: sold ? Number(sold) : existingProduct.sold,
+        };
+
+        // Update the product
+        const updatedProduct = await ProductModel.findByIdAndUpdate(id, updatedProductData, { new: true });
+
+        res.status(200).json({ success: true, message: "Product updated successfully", product: updatedProduct });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
 
 export { listProducts, addProduct, removeProduct, singleProduct, editProduct }

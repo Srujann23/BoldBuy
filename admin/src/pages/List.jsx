@@ -4,8 +4,9 @@ import axios from 'axios';
 import { currency } from '../App';
 import { toast } from 'react-toastify';
 import ImageModal from '../components/ImageModal';
+import EditProductModal from '../components/EditProductModal';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Star } from 'lucide-react'
 
 const List = ({ token }) => {
     const [list, setList] = useState([]);
@@ -23,6 +24,7 @@ const List = ({ token }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedImages, setSelectedImages] = useState([]);
     const [productToDelete, setProductToDelete] = useState(null);
+    const [productToEdit, setProductToEdit] = useState(null);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' })
 
 
@@ -51,7 +53,7 @@ const List = ({ token }) => {
     const removeProduct = async (id) => {
         try {
             const response = await axios.post(backendUrl + '/api/product/remove', { id }, { headers: { token } });
-    
+
             if (response.data.success) {
                 toast.success(response.data.message);
                 fetchList();  // Refresh the list after deletion
@@ -64,7 +66,7 @@ const List = ({ token }) => {
         }
     };
 
-    
+
 
     // Open modal with images
     const openImageModal = (images) => {
@@ -77,16 +79,16 @@ const List = ({ token }) => {
         setIsModalOpen(false);
     };
 
-    
+
     useEffect(() => {
         fetchList();
     }, []);
-    
+
     const handleCategoryChange = (e) => {
         setSelectedCategory(e.target.value);
         setCurrentPage(1);
     };
-    
+
     const handleSubCategoryChange = (e) => {
         setSelectedSubCategory(e.target.value);
         setCurrentPage(1);
@@ -98,7 +100,7 @@ const List = ({ token }) => {
         else if (name === "maxPrice") setMaxPrice(value);
         setCurrentPage(1);
     };
-    
+
     const handleStockChange = (e) => {
         const { name, value } = e.target;
         if (name === "minStock") setMinStock(value);
@@ -111,7 +113,7 @@ const List = ({ token }) => {
         else if (name === "maxSold") setMaxSold(value);
         setCurrentPage(1);
     };
-    
+
     const filteredList = list.filter(item => {
         const categoryMatch = selectedCategory === "All" || item.category === selectedCategory;
         const subCategoryMatch = selectedSubCategory === "All" || item.subCategory === selectedSubCategory;
@@ -119,36 +121,36 @@ const List = ({ token }) => {
             (!minPrice || item.price >= parseFloat(minPrice)) &&
             (!maxPrice || item.price <= parseFloat(maxPrice));
         const stockMatch =
-        (!minStock || item.stock >= parseInt(minStock)) &&
-        (!maxStock || item.stock <= parseInt(maxStock));
+            (!minStock || item.stock >= parseInt(minStock)) &&
+            (!maxStock || item.stock <= parseInt(maxStock));
         const soldMatch =
-        (!minSold || item.sold >= parseInt(minSold)) &&
-        (!maxSold || item.sold <= parseInt(maxSold));
+            (!minSold || item.sold >= parseInt(minSold)) &&
+            (!maxSold || item.sold <= parseInt(maxSold));
         return categoryMatch && subCategoryMatch && priceMatch && stockMatch && soldMatch;
     });
     const sortedList = React.useMemo(() => {
         let sortableItems = [...filteredList]
         if (sortConfig.key !== null) {
-          sortableItems.sort((a, b) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
-              return sortConfig.direction === 'ascending' ? -1 : 1
-            }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
-              return sortConfig.direction === 'ascending' ? 1 : -1
-            }
-            return 0
-          })
+            sortableItems.sort((a, b) => {
+                if (a[sortConfig.key] < b[sortConfig.key]) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1
+                }
+                if (a[sortConfig.key] > b[sortConfig.key]) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1
+                }
+                return 0
+            })
         }
         return sortableItems
-      }, [filteredList, sortConfig])
-    
-      const requestSort = (key) => {
+    }, [filteredList, sortConfig])
+
+    const requestSort = (key) => {
         let direction = 'ascending'
         if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-          direction = 'descending'
+            direction = 'descending'
         }
         setSortConfig({ key, direction })
-      }
+    }
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -161,104 +163,103 @@ const List = ({ token }) => {
     };
 
     return (
-        <>
-            <p className='mb-4 text-lg font-semibold'>All Products List</p>
-            <div className="mb-4 flex items-center gap-4">
-    <div className="flex flex-col">
-        <label htmlFor="category" className="font-semibold mb-1">Filter by Category:</label>
-        <select
-            id="category"
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            className="p-2 border rounded-md"
-        >
-            {categories.map((category, index) => (
-                <option key={index} value={category}>{category}</option>
-            ))}
-        </select>
-    </div>
+        <div className="container mx-auto px-4">
+            <h1 className='mb-4 text-2xl font-semibold'>All Products List</h1>
+            <div className="mb-4 flex flex-wrap items-center gap-4">
+                <div className="flex flex-col">
+                    <label htmlFor="category" className="font-semibold mb-1">Filter by Category:</label>
+                    <select
+                        id="category"
+                        value={selectedCategory}
+                        onChange={handleCategoryChange}
+                        className="p-2 border rounded-md"
+                    >
+                        {categories.map((category, index) => (
+                            <option key={index} value={category}>{category}</option>
+                        ))}
+                    </select>
+                </div>
 
-    <div className="flex flex-col">
-        <label htmlFor="subcategory" className="font-semibold mb-1">Filter by Subcategory:</label>
-        <select
-            id="subcategory"
-            value={selectedSubCategory}
-            onChange={handleSubCategoryChange}
-            className="p-2 border rounded-md"
-        >
-            {subCategories.map((subCategory, index) => (
-                <option key={index} value={subCategory}>{subCategory}</option>
-            ))}
-        </select>
-    </div>
+                <div className="flex flex-col">
+                    <label htmlFor="subcategory" className="font-semibold mb-1">Filter by Subcategory:</label>
+                    <select
+                        id="subcategory"
+                        value={selectedSubCategory}
+                        onChange={handleSubCategoryChange}
+                        className="p-2 border rounded-md"
+                    >
+                        {subCategories.map((subCategory, index) => (
+                            <option key={index} value={subCategory}>{subCategory}</option>
+                        ))}
+                    </select>
+                </div>
 
-    <div className="flex flex-col">
-        <label className="font-semibold mb-1">Price Range:</label>
-        <div className="flex gap-2">
-            <input
-                type="number"
-                name="minPrice"
-                value={minPrice}
-                onChange={handlePriceChange}
-                placeholder="Min"
-                className="p-2 border rounded-md w-24"
-            />
-            <input
-                type="number"
-                name="maxPrice"
-                value={maxPrice}
-                onChange={handlePriceChange}
-                placeholder="Max"
-                className="p-2 border rounded-md w-24"
-            />
-        </div>
-    </div>
+                <div className="flex flex-col">
+                    <label className="font-semibold mb-1">Price Range:</label>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            name="minPrice"
+                            value={minPrice}
+                            onChange={handlePriceChange}
+                            placeholder="Min"
+                            className="p-2 border rounded-md w-24"
+                        />
+                        <input
+                            type="number"
+                            name="maxPrice"
+                            value={maxPrice}
+                            onChange={handlePriceChange}
+                            placeholder="Max"
+                            className="p-2 border rounded-md w-24"
+                        />
+                    </div>
+                </div>
 
-    <div className="flex flex-col">
-        <label className="font-semibold mb-1">Stock Range:</label>
-        <div className="flex gap-2">
-            <input
-                type="number"
-                name="minStock"
-                value={minStock}
-                onChange={handleStockChange}
-                placeholder="Min"
-                className="p-2 border rounded-md w-24"
-            />
-            <input
-                type="number"
-                name="maxStock"
-                value={maxStock}
-                onChange={handleStockChange}
-                placeholder="Max"
-                className="p-2 border rounded-md w-24"
-            />
-        </div>
-    </div>
+                <div className="flex flex-col">
+                    <label className="font-semibold mb-1">Stock Range:</label>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            name="minStock"
+                            value={minStock}
+                            onChange={handleStockChange}
+                            placeholder="Min"
+                            className="p-2 border rounded-md w-24"
+                        />
+                        <input
+                            type="number"
+                            name="maxStock"
+                            value={maxStock}
+                            onChange={handleStockChange}
+                            placeholder="Max"
+                            className="p-2 border rounded-md w-24"
+                        />
+                    </div>
+                </div>
 
-    <div className="flex flex-col">
-        <label className="font-semibold mb-1">Sold Range:</label>
-        <div className="flex gap-2">
-            <input
-                type="number"
-                name="minSold"
-                value={minSold}
-                onChange={handleSoldChange}
-                placeholder="Min"
-                className="p-2 border rounded-md w-24"
-            />
-            <input
-                type="number"
-                name="maxSold"
-                value={maxSold}
-                onChange={handleSoldChange}
-                placeholder="Max"
-                className="p-2 border rounded-md w-24"
-            />
-        </div>
-    </div>
-</div>
-
+                <div className="flex flex-col">
+                    <label className="font-semibold mb-1">Sold Range:</label>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            name="minSold"
+                            value={minSold}
+                            onChange={handleSoldChange}
+                            placeholder="Min"
+                            className="p-2 border rounded-md w-24"
+                        />
+                        <input
+                            type="number"
+                            name="maxSold"
+                            value={maxSold}
+                            onChange={handleSoldChange}
+                            placeholder="Max"
+                            className="p-2 border rounded-md w-24"
+                        />
+                    </div>
+                </div>
+            </div>
 
             <div className='flex flex-col gap-4'>
                 <div className='hidden md:grid grid-cols-[100px_2fr_1fr_1fr_1fr_1fr_1fr_80px] items-center py-2 px-4 border-b bg-gray-200 text-sm font-semibold'>
@@ -267,14 +268,14 @@ const List = ({ token }) => {
                     <span>Category</span>
                     <span>Subcategory</span>
                     <button onClick={() => requestSort('price')} className="flex items-center">
-            Price <ArrowUpDown className="ml-1 h-4 w-4" />
-          </button>
-          <button onClick={() => requestSort('stock')} className="flex items-center">
-            Stock <ArrowUpDown className="ml-1 h-4 w-4" />
-          </button>
-          <button onClick={() => requestSort('sold')} className="flex items-center">
-            Sold <ArrowUpDown className="ml-1 h-4 w-4" />
-          </button>
+                        Price <ArrowUpDown className="ml-1 h-4 w-4" />
+                    </button>
+                    <button onClick={() => requestSort('stock')} className="flex items-center">
+                        Stock <ArrowUpDown className="ml-1 h-4 w-4" />
+                    </button>
+                    <button onClick={() => requestSort('sold')} className="flex items-center">
+                        Sold <ArrowUpDown className="ml-1 h-4 w-4" />
+                    </button>
                     <span className='text-center'>Action</span>
                 </div>
 
@@ -301,18 +302,38 @@ const List = ({ token }) => {
                             <p>{item.sold}</p>
                         </div>
 
-                        <p className='hidden md:block truncate'>{item.name}</p>
+                        <div className='hidden md:block relative group'>
+                            <div className="flex items-center">
+                                <p className='truncate mr-2'>{item.name}</p>
+                                {item.bestseller && (
+                                    <span className='text-yellow-500 flex-shrink-0'>
+                                        <Star className='h-4 w-4 fill-current' />
+                                    </span>
+                                )}
+                            </div>
+                            <div className='absolute z-10 bg-white border shadow-lg p-2 rounded hidden group-hover:block left-0 top-full mt-1 w-full'>
+                                {item.name}
+                            </div>
+                        </div>
                         <p className='hidden md:block'>{item.category}</p>
                         <p className='hidden md:block'>{item.subCategory}</p>
                         <p className='hidden md:block'>{currency}{item.price}</p>
                         <p className='hidden md:block'>{item.stock}</p>
                         <p className='hidden md:block'>{item.sold}</p>
-                        <p
-                            onClick={() => setProductToDelete(item._id)}  // Set the product ID to delete
-                            className='text-red-500 font-bold hover:text-red-700 cursor-pointer'
-                        >
-                            ✖ Delete
-                        </p>
+                        <div className='flex gap-2 justify-center md:justify-start'>
+                            <button
+                                onClick={() => setProductToEdit(item)}
+                                className='text-blue-500 font-bold hover:text-blue-700 cursor-pointer'
+                            >
+                                Edit
+                            </button>
+                            <button
+                                onClick={() => setProductToDelete(item._id)}
+                                className='text-red-500 font-bold hover:text-red-700 cursor-pointer'
+                            >
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -329,19 +350,25 @@ const List = ({ token }) => {
                 ))}
             </div>
             {productToDelete && (
-    <ConfirmationModal
-        onClose={() => setProductToDelete(null)}  // Close modal on 'No'
-        onConfirm={() => {
-            removeProduct(productToDelete);  // Call removeProduct to delete
-            setProductToDelete(null);  // Close modal after deletion
-        }}
-    />
-)}
+                <ConfirmationModal
+                    onClose={() => setProductToDelete(null)}
+                    onConfirm={() => {
+                        removeProduct(productToDelete);
+                        setProductToDelete(null);
+                    }}
+                />
+            )}
 
-            {/* Modal to display images */}
             <ImageModal isOpen={isModalOpen} images={selectedImages} onClose={closeImageModal} />
-        </>
+            <EditProductModal
+                isOpen={!!productToEdit}
+                onClose={() => setProductToEdit(null)}
+                product={productToEdit}
+                token={token}
+                onProductUpdate={fetchList}
+            />
+        </div>
     );
-};
+}
 
 export default List;
