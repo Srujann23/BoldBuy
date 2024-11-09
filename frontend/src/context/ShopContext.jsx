@@ -14,7 +14,7 @@ const ShopContextProvider = (props) => {
     const [cartItems, setCartItems] = useState({});
     const [products, setProducts] = useState([]);
     const [token, setToken] = useState('');
-    const [username, setUsername] = useState('');
+    const [userName, setUserName] = useState('');
     const navigate = useNavigate();
 
     const addToCart = async (itemId, size) => {
@@ -26,7 +26,7 @@ const ShopContextProvider = (props) => {
         if (cartData[itemId]) {
             if (cartData[itemId][size]) {
                 cartData[itemId][size] += 1;
-            }
+            }   
             else {
                 cartData[itemId][size] = 1;
             }
@@ -101,7 +101,6 @@ const ShopContextProvider = (props) => {
             const response = await axios.post(backendUrl + '/api/cart/get', {}, { headers: { token } });
             if (response.data.success) {
                 setCartItems(response.data.cartData);
-                setUsername(response.data.username); // Assuming the API now returns the username
             }
         } catch (error) {
             console.log(error);
@@ -114,10 +113,15 @@ const ShopContextProvider = (props) => {
     }, [])
 
     useEffect(() => {
-        if (!token && localStorage.getItem('token')) {
-            const storedToken = localStorage.getItem('token');
+        getProductsData();
+        const storedToken = localStorage.getItem('token');
+        const storedUserName = localStorage.getItem('userName');
+        if (storedToken) {
             setToken(storedToken);
             getUserCart(storedToken);
+        }
+        if (storedUserName) {
+            setUserName(storedUserName);
         }
     }, [])
 
@@ -153,8 +157,8 @@ const ShopContextProvider = (props) => {
         backendUrl,
         setToken, 
         token,
-        username,
-        setUsername
+        userName,
+        setUserName
     }
 
     return (

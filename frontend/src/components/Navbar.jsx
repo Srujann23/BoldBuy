@@ -5,7 +5,7 @@ import { ShopContext } from '../context/ShopContext.jsx';
 
 const Navbar = () => {
     const [visible, setVisible] = useState(false);
-    const { setShowSearch, getCartCount, navigate, token, setToken, setCartItems, username } = useContext(ShopContext);
+    const { setShowSearch, getCartCount, navigate, token, setToken, setCartItems, userName } = useContext(ShopContext);
 
     const logout = () => {
         navigate('/login');
@@ -46,7 +46,7 @@ const Navbar = () => {
                     {token &&
                     <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-4'>
                         <div className='flex flex-col gap-2 w-48 py-3 px-5 bg-slate-100 text-gray-500 rounded'>
-                            <p className='cursor-default text-black font-semibold'>Welcome, {username.charAt(0).toUpperCase() + username.slice(1)}!</p>
+                            <p className='cursor-default text-black font-semibold'>Welcome, {userName.charAt(0).toUpperCase() + userName.slice(1)}!</p>
                             <p onClick={() => navigate('/orders')} className='cursor-pointer hover:text-black'>Orders</p>
                             <p onClick={logout} className='cursor-pointer hover:text-black'>Logout</p>
                         </div>

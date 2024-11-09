@@ -18,7 +18,8 @@ const loginUser = async (req, res) => {
 
         if (isMatch) {
             const token = createToken(user._id);
-            res.json({ success: true, token });
+            // res.json({ success: true, token });
+            res.json({ success: true, token, name: user.name });
         }
         else {
 
@@ -63,7 +64,8 @@ const registerUser = async (req, res) => {
         const user = await newUser.save()
 
         const token = createToken(user._id);
-        res.status(201).json({ success: true, message: "User created successfully", token })
+        // res.status(201).json({ success: true, message: "User created successfully", token })
+        res.status(201).json({ success: true, message: "User created successfully", token, name: user.name })
 
     } catch (error) {
         console.log(error);
