@@ -63,21 +63,24 @@ const Login = () => {
           type="text" 
           className="w-full px-3 py-2 border border-gray-800" 
           placeholder='Name' 
-        />
-      )}
+          required
+          />
+        )}
       <input 
         onChange={(e) => setEmail(e.target.value)} 
         value={email} 
         type="email" 
         className="w-full px-3 py-2 border border-gray-800" 
         placeholder='Email' 
-      />
+        required
+        />
       <input 
         onChange={(e) => setPassword(e.target.value)} 
         value={password} 
         type="password" 
         className="w-full px-3 py-2 border border-gray-800" 
         placeholder='Password' 
+        required
       />
       <div className="w-full flex justify-between text-sm mt-[-8px]">
         <p className='cursor-pointer'>Forgot Password</p>
