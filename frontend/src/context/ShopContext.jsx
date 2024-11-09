@@ -1,5 +1,4 @@
 import { createContext, useEffect, useState } from "react";
-import { products } from "../assets/frontend_assets/assets";
 import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
@@ -7,7 +6,6 @@ import axios from 'axios';
 export const ShopContext = createContext();
 
 const ShopContextProvider = (props) => {
-
     const currency = '₹';
     const delivery_fee = 100;
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -16,6 +14,7 @@ const ShopContextProvider = (props) => {
     const [cartItems, setCartItems] = useState({});
     const [products, setProducts] = useState([]);
     const [token, setToken] = useState('');
+    const [username, setUsername] = useState('');
     const navigate = useNavigate();
 
     const addToCart = async (itemId, size) => {
@@ -45,7 +44,6 @@ const ShopContextProvider = (props) => {
             } catch (error) {
                 console.log(error);
                 toast.error(error.message);
-
             }
         }
     }
@@ -92,7 +90,6 @@ const ShopContextProvider = (props) => {
             } else {
                 toast.error(response.data.message);
             }
-
         } catch (error) {
             console.log(error);
             toast.error(error.message);
@@ -100,12 +97,13 @@ const ShopContextProvider = (props) => {
     }
 
     const getUserCart = async (token) => {
-        try{
-            const response = await axios.post(backendUrl + '/api/cart/get',{},{headerse:{token}});
-            if(response.data.success){
+        try {
+            const response = await axios.post(backendUrl + '/api/cart/get', {}, { headers: { token } });
+            if (response.data.success) {
                 setCartItems(response.data.cartData);
+                setUsername(response.data.username); // Assuming the API now returns the username
             }
-        }catch(error){
+        } catch (error) {
             console.log(error);
             toast.error(error.message);
         }
@@ -113,44 +111,50 @@ const ShopContextProvider = (props) => {
 
     useEffect(() => {
         getProductsData();
-    },[])
+    }, [])
 
     useEffect(() => {
         if (!token && localStorage.getItem('token')) {
-            setToken(localStorage.getItem('token'));
-            getUserCart(localStorage.getItem('token'));
+            const storedToken = localStorage.getItem('token');
+            setToken(storedToken);
+            getUserCart(storedToken);
         }
-    })
+    }, [])
 
     const updateQuantity = async (itemId, size, quantity) => {
         let cartData = structuredClone(cartItems);
-
         cartData[itemId][size] = quantity;
-
         setCartItems(cartData);
-        if(token){
-            try{
-                await axios.post(backendUrl + '/api/cart/update',{itemId,size,quantity},{headers:{token}});
-
-            }catch(error){
+        if (token) {
+            try {
+                await axios.post(backendUrl + '/api/cart/update', { itemId, size, quantity }, { headers: { token } });
+            } catch (error) {
                 console.log(error);
                 toast.error(error.message);
             }
         }
     }
 
-    // useEffect(()=>{
-    //     console.log(cartItems);
-    // },[cartItems])
-
     const value = {
-        products, currency, delivery_fee,
-        search, setSearch, showSearch, setShowSearch,
-        cartItems, addToCart,setCartItems,
-        getCartCount, updateQuantity,
-        getCartAmount, navigate,
+        products, 
+        currency, 
+        delivery_fee,
+        search, 
+        setSearch, 
+        showSearch, 
+        setShowSearch,
+        cartItems, 
+        addToCart,
+        setCartItems,
+        getCartCount, 
+        updateQuantity,
+        getCartAmount, 
+        navigate,
         backendUrl,
-        setToken, token
+        setToken, 
+        token,
+        username,
+        setUsername
     }
 
     return (
@@ -159,7 +163,5 @@ const ShopContextProvider = (props) => {
         </ShopContext.Provider>
     )
 }
-
-
 
 export default ShopContextProvider

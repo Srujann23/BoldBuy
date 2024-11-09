@@ -48,14 +48,17 @@ const updateCart = async (req, res) => {
 
 //get cart data
 const getUserCart = async (req, res) => {
-    try{
-        const {userId} = req.body;
+    try {
+        const { userId } = req.body;
         const userData = await userModel.findById(userId)
         let cartData = await userData.cartData;
 
-        res.json({success:true,cartData});
+        // res.json({success:true,cartData});
+        const username = userData.name; // Assuming 'username' is the field name in your user model
 
-    }catch(error){
+        res.json({ success: true, cartData, username });
+
+    } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
     }
