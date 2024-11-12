@@ -43,8 +43,8 @@ const PlaceOrder = () => {
       handler: async (response) => {
         console.log(response)
         try {
-          const { data } = await axios.post(backendUrl + '/api/order/verifyRazorpay',response,{headers:{token}})
-          if(data.success){
+          const { data } = await axios.post(backendUrl + '/api/order/verifyRazorpay', response, { headers: { token } })
+          if (data.success) {
             navigate('/orders')
             setCartItems({})
           }
@@ -69,64 +69,69 @@ const PlaceOrder = () => {
           if (cartItems[items][item] > 0) {
             const itemInfo = structuredClone(products.find(product => product._id === items));
             if (itemInfo) {
-              itemInfo.size = item
-              itemInfo.quantity = cartItems[items][item]
-              orderItems.push(itemInfo)
+              itemInfo.size = item;
+              itemInfo.quantity = cartItems[items][item];
+              orderItems.push(itemInfo);
             }
           }
         }
       }
+
       let orderData = {
         address: formData,
         items: orderItems,
-        amount: getCartAmount() + delivery_fee
-      }
+        amount: getCartAmount() + delivery_fee,
+      };
 
       switch (method) {
-        //api calls for cod
         case 'cod':
           const response = await axios.post(backendUrl + '/api/order/place', orderData, { headers: { token } });
-          console.log(response.data);
 
           if (response.data.success) {
             setCartItems({});
-            navigate('/orders')
+            navigate('/orders');
             toast.success("Order Placed!");
+          } else if (response.status === 400 && response.data.message.includes("Insufficient stock")) {
+            console.log("Error: Insufficient stock for one or more items in your cart.");
+            toast.error("Insufficient stock for one or more items in your cart. Please adjust quantities.");
           } else {
-            toast.error(response.data.message);
+            toast.error(response.data.message || "Order could not be placed.");
           }
           break;
 
         case 'stripe':
           toast.info("Under Development, Please Select COD!");
-          // const responseStripe = await axios.post(backendUrl, + '/api/order/stripe', orderData, { headers: { token } });
+          // Uncomment and configure when Stripe is ready
+          // const responseStripe = await axios.post(backendUrl + '/api/order/stripe', orderData, { headers: { token } });
           // if (responseStripe.data.success) {
-          //   const { session_url } = responseStripe.data
-          //   window.location.replace(session_url)
+          //   const { session_url } = responseStripe.data;
+          //   window.location.replace(session_url);
           // } else {
-          //   toast.error(responseStripe.data.message)
+          //   toast.error(responseStripe.data.message);
           // }
           break;
 
         case 'razorpay':
           toast.info("Under Development, Please Select COD!");
-          // const responseRazorpay = await axios.post(backendUrl + '/api/order/razorpay', orderData, { headers: { token } })
+          // Uncomment and configure when Razorpay is ready
+          // const responseRazorpay = await axios.post(backendUrl + '/api/order/razorpay', orderData, { headers: { token } });
           // if (responseRazorpay.data.success) {
-          //   initPay(responseRazorpay.data.order)
+          //   initPay(responseRazorpay.data.order);
           // } else {
-
+          //   toast.error(responseRazorpay.data.message);
           // }
           break;
+
         default:
           break;
       }
 
     } catch (error) {
       console.error(error);
-      toast.error(error.message);
-
+      toast.error(error.response?.data?.message || "An error occurred while placing the order.");
     }
   }
+
 
 
   return (

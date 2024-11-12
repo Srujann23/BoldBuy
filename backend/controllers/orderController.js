@@ -1,6 +1,9 @@
 // import { currency } from '../../admin/src/App.jsx';
 import orderModel from '../models/orderModel.js'
 import userModel from '../models/userModel.js';
+import productModel from '../models/productModel.js';
+import mongoose from "mongoose";
+
 import Stripe from 'stripe'
 import razorpay from 'razorpay';
 //global vars
@@ -15,32 +18,99 @@ const deliveryCharge = 100
 // })
 //COD
 const placeOrder = async (req, res) => {
+    let session;
     try {
-        const { userId, items, amount, address } = req.body;
-        const orderData = {
-            userId,
-            items,
-            amount,
-            address,
-            paymentMethod: "COD",
-            payment: false,
-            date: Date.now()
+      console.log('Received order request:', JSON.stringify(req.body, null, 2));
+  
+      session = await mongoose.startSession()
+      session.startTransaction()
+  
+      const { userId, items, amount, address } = req.body
+  
+      if (!userId || !items || !Array.isArray(items) || items.length === 0 || !amount || !address) {
+        throw new Error('Invalid request body structure')
+      }
+  
+      const orderData = {
+        userId,
+        items,
+        amount,
+        address,
+        paymentMethod: "COD",
+        payment: false,
+        date: Date.now()
+      }
+  
+      const newOrder = new orderModel(orderData)
+      await newOrder.save({ session })
+      console.log('Order saved:', newOrder._id)
+  
+      for (const item of items) {
+        if (!item._id) {
+          throw new Error(`Invalid item structure: missing _id for item ${JSON.stringify(item)}`)
         }
-
-        const newOrder = new orderModel(orderData)
-        await newOrder.save()
-
-        await userModel.findByIdAndUpdate(userId, { cartData: {} })
-
-        res.json({ success: true, message: "Order Placed!" })
-
-
+  
+        const product = await productModel.findById(item._id).session(session)
+        if (!product) {
+          throw new Error(`Product not found: ${item._id}`)
+        }
+        if (product.stock < item.quantity) {
+          throw new Error(`Insufficient stock for product: ${product.name}. Required: ${item.quantity}, Available: ${product.stock}`)
+        }
+  
+        const updatedProduct = await productModel.findByIdAndUpdate(
+          item._id,
+          { 
+            $inc: { 
+              stock: -item.quantity,
+              sold: item.quantity
+            } 
+          },
+          { new: true, session }
+        )
+        if (!updatedProduct) {
+          throw new Error(`Failed to update product: ${item._id}`)
+        }
+        console.log(`Updated product ${item._id}:`, { stock: updatedProduct.stock, sold: updatedProduct.sold })
+      }
+  
+      const updatedUser = await userModel.findByIdAndUpdate(userId, { cartData: {} }, { new: true, session })
+      if (!updatedUser) {
+        throw new Error(`Failed to clear cart for user: ${userId}`)
+      }
+      console.log(`Cleared cart for user ${userId}`)
+  
+      await session.commitTransaction()
+      console.log('Transaction committed successfully')
+  
+      res.json({ success: true, message: "Order Placed!" })
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message })
-
+      console.error('Error in placeOrder:', error)
+      if (session) {
+        try {
+          await session.abortTransaction()
+          console.log('Transaction aborted')
+        } catch (abortError) {
+          console.error('Error aborting transaction:', abortError)
+        }
+      }
+      if (error.message.startsWith('Insufficient stock for product:')) {
+        res.status(400).json({ success: false, message: error.message, type: 'INSUFFICIENT_STOCK' })
+      } else {
+        res.status(500).json({ success: false, message: error.message, stack: error.stack })
+      }
+    } finally {
+      if (session) {
+        try {
+          await session.endSession()
+          console.log('Session ended')
+        } catch (endSessionError) {
+          console.error('Error ending session:', endSessionError)
+        }
+      }
     }
-}
+  }
+
 
 //stripe
 // const placeOrderStripe = async (req, res) => {
