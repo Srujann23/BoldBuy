@@ -82,9 +82,7 @@ const Product = () => {
                       {item.size}
                     </button>
                   ))
-              ) : (
-                <p>No available sizes</p> // If no sizes are available, display a message
-              )}
+              ):(<></>)}
             </div>
             {isOutOfStock && <p className="text-red-500 mt-3">Out of Stock</p>} {/* Display Out of Stock message */}
           </div>
