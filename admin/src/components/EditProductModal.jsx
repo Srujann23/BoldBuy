@@ -11,10 +11,9 @@ function EditProductModal({ isOpen, onClose, product, token, onProductUpdate }) 
       price: '',
       category: '',
       subCategory: '',
-      sizes: [],
+      sizeStock: [],
       bestseller: false,
-      stock: '',
-      sold: ''
+      sizes: []
     });
   
     useEffect(() => {
@@ -27,8 +26,7 @@ function EditProductModal({ isOpen, onClose, product, token, onProductUpdate }) 
           subCategory: product.subCategory,
           sizes: product.sizes,
           bestseller: product.bestseller,
-          stock: product.stock.toString(),
-          sold: product.sold.toString(),
+          sizeStock: product.sizeStock || [],
         });
       }
     }, [product]);
@@ -43,14 +41,12 @@ function EditProductModal({ isOpen, onClose, product, token, onProductUpdate }) 
       setFormData((prev) => ({ ...prev, [name]: checked }));
     };
   
-    const handleSizeChange = (e) => {
-      const { checked, value } = e.target;
-      setFormData((prev) => ({
-        ...prev,
-        sizes: checked
-          ? [...prev.sizes, value]
-          : prev.sizes.filter((size) => size !== value),
-      }));
+    const handleSizeStockChange = (index, field, value) => {
+      setFormData((prev) => {
+        const newSizeStock = [...prev.sizeStock];
+        newSizeStock[index] = { ...newSizeStock[index], [field]: parseInt(value) };
+        return { ...prev, sizeStock: newSizeStock };
+      });
     };
   
     const handleSubmit = async (e) => {
@@ -60,6 +56,7 @@ function EditProductModal({ isOpen, onClose, product, token, onProductUpdate }) 
           id: product._id,
           ...formData,
           sizes: JSON.stringify(formData.sizes),
+          sizeStock: JSON.stringify(formData.sizeStock),
           bestseller: formData.bestseller.toString(),
         };
   
@@ -156,20 +153,46 @@ function EditProductModal({ isOpen, onClose, product, token, onProductUpdate }) 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Sizes</label>
-            <div className="mt-2 space-x-4">
+            <label className="block text-sm font-medium text-gray-700">Stock and Sold</label>
+            <div className="mt-2 space-y-2">
               {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-                <label key={size} className="inline-flex items-center">
+                <div key={size} className="flex items-center space-x-2">
+                  <span className="w-8">{size}</span>
                   <input
-                    type="checkbox"
-                    name="sizes"
-                    value={size}
-                    checked={formData.sizes.includes(size)}
-                    onChange={handleSizeChange}
-                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    type="number"
+                    name={`stock-${size}`}
+                    value={formData.sizeStock.find(item => item.size === size)?.stock || 0}
+                    onChange={(e) => {
+                      const newSizeStock = [...formData.sizeStock];
+                      const index = newSizeStock.findIndex(item => item.size === size);
+                      if (index !== -1) {
+                        newSizeStock[index].stock = parseInt(e.target.value);
+                      } else {
+                        newSizeStock.push({ size, stock: parseInt(e.target.value), sold: 0 });
+                      }
+                      setFormData(prev => ({ ...prev, sizeStock: newSizeStock }));
+                    }}
+                    className="mt-1 block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    placeholder="Stock"
                   />
-                  <span className="ml-2">{size}</span>
-                </label>
+                  <input
+                    type="number"
+                    name={`sold-${size}`}
+                    value={formData.sizeStock.find(item => item.size === size)?.sold || 0}
+                    onChange={(e) => {
+                      const newSizeStock = [...formData.sizeStock];
+                      const index = newSizeStock.findIndex(item => item.size === size);
+                      if (index !== -1) {
+                        newSizeStock[index].sold = parseInt(e.target.value);
+                      } else {
+                        newSizeStock.push({ size, stock: 0, sold: parseInt(e.target.value) });
+                      }
+                      setFormData(prev => ({ ...prev, sizeStock: newSizeStock }));
+                    }}
+                    className="mt-1 block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    placeholder="Sold"
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -184,28 +207,6 @@ function EditProductModal({ isOpen, onClose, product, token, onProductUpdate }) 
               />
               <span className="ml-2">Bestseller</span>
             </label>
-          </div>
-          <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Stock</label>
-            <input
-              type="number"
-              id="stock"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              required
-            />
-            <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Sold</label>
-            <input
-              type="number"
-              id="sold"
-              name="sold"
-              value={formData.sold}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              required
-            />
           </div>
           <div className="flex justify-end space-x-2">
             <button
@@ -229,3 +230,4 @@ function EditProductModal({ isOpen, onClose, product, token, onProductUpdate }) 
 }
 
 export default EditProductModal;
+

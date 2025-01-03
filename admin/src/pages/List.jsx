@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import ImageModal from '../components/ImageModal';
 import EditProductModal from '../components/EditProductModal';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { ArrowUpDown, Star } from 'lucide-react'
+import { ArrowUpDown, Star, ChevronDown, ChevronUp } from 'lucide-react'
 
 const List = ({ token }) => {
     const [list, setList] = useState([]);
@@ -17,20 +17,20 @@ const List = ({ token }) => {
     const [selectedSubCategory, setSelectedSubCategory] = useState("All");
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
-    const [minStock, setMinStock] = useState("");
-    const [maxStock, setMaxStock] = useState("");
-    const [minSold, setMinSold] = useState("");
-    const [maxSold, setMaxSold] = useState("");
+    const [minTotalStock, setMinTotalStock] = useState("");
+    const [maxTotalStock, setMaxTotalStock] = useState("");
+    const [minTotalSold, setMinTotalSold] = useState("");
+    const [maxTotalSold, setMaxTotalSold] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedImages, setSelectedImages] = useState([]);
     const [productToDelete, setProductToDelete] = useState(null);
     const [productToEdit, setProductToEdit] = useState(null);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' })
-
+    const [expandedStocks, setExpandedStocks] = useState({});
+    const [expandedSold, setExpandedSold] = useState({});
 
     const itemsPerPage = 10;
 
-    // Fetch the list of products
     const fetchList = async () => {
         try {
             const response = await axios.get(backendUrl + '/api/product/list', { headers: { token } });
@@ -50,13 +50,14 @@ const List = ({ token }) => {
             toast.error(error.message);
         }
     };
+
     const removeProduct = async (id) => {
         try {
             const response = await axios.post(backendUrl + '/api/product/remove', { id }, { headers: { token } });
 
             if (response.data.success) {
                 toast.success(response.data.message);
-                fetchList();  // Refresh the list after deletion
+                fetchList();
             } else {
                 toast.error(response.data.message);
             }
@@ -66,19 +67,14 @@ const List = ({ token }) => {
         }
     };
 
-
-
-    // Open modal with images
     const openImageModal = (images) => {
         setSelectedImages(images);
         setIsModalOpen(true);
     };
 
-    // Close the modal
     const closeImageModal = () => {
         setIsModalOpen(false);
     };
-
 
     useEffect(() => {
         fetchList();
@@ -101,17 +97,40 @@ const List = ({ token }) => {
         setCurrentPage(1);
     };
 
-    const handleStockChange = (e) => {
+    const handleTotalStockChange = (e) => {
         const { name, value } = e.target;
-        if (name === "minStock") setMinStock(value);
-        else if (name === "maxStock") setMaxStock(value);
+        if (name === "minTotalStock") setMinTotalStock(value);
+        else if (name === "maxTotalStock") setMaxTotalStock(value);
         setCurrentPage(1);
     };
-    const handleSoldChange = (e) => {
+
+    const handleTotalSoldChange = (e) => {
         const { name, value } = e.target;
-        if (name === "minSold") setMinSold(value);
-        else if (name === "maxSold") setMaxSold(value);
+        if (name === "minTotalSold") setMinTotalSold(value);
+        else if (name === "maxTotalSold") setMaxTotalSold(value);
         setCurrentPage(1);
+    };
+
+    const calculateTotalStock = (sizeStock) => {
+        return sizeStock.reduce((total, size) => total + size.stock, 0);
+    };
+
+    const calculateTotalSold = (sizeStock) => {
+        return sizeStock.reduce((total, size) => total + size.sold, 0);
+    };
+
+    const toggleStockExpand = (productId) => {
+        setExpandedStocks(prev => ({
+            ...prev,
+            [productId]: !prev[productId]
+        }));
+    };
+
+    const toggleSoldExpand = (productId) => {
+        setExpandedSold(prev => ({
+            ...prev,
+            [productId]: !prev[productId]
+        }));
     };
 
     const filteredList = list.filter(item => {
@@ -120,18 +139,31 @@ const List = ({ token }) => {
         const priceMatch =
             (!minPrice || item.price >= parseFloat(minPrice)) &&
             (!maxPrice || item.price <= parseFloat(maxPrice));
+        const totalStock = calculateTotalStock(item.sizeStock);
+        const totalSold = calculateTotalSold(item.sizeStock);
         const stockMatch =
-            (!minStock || item.stock >= parseInt(minStock)) &&
-            (!maxStock || item.stock <= parseInt(maxStock));
+            (!minTotalStock || totalStock >= parseInt(minTotalStock)) &&
+            (!maxTotalStock || totalStock <= parseInt(maxTotalStock));
         const soldMatch =
-            (!minSold || item.sold >= parseInt(minSold)) &&
-            (!maxSold || item.sold <= parseInt(maxSold));
+            (!minTotalSold || totalSold >= parseInt(minTotalSold)) &&
+            (!maxTotalSold || totalSold <= parseInt(maxTotalSold));
         return categoryMatch && subCategoryMatch && priceMatch && stockMatch && soldMatch;
     });
+
     const sortedList = React.useMemo(() => {
         let sortableItems = [...filteredList]
         if (sortConfig.key !== null) {
             sortableItems.sort((a, b) => {
+                if (sortConfig.key === 'stock') {
+                    const aStock = calculateTotalStock(a.sizeStock);
+                    const bStock = calculateTotalStock(b.sizeStock);
+                    return sortConfig.direction === 'ascending' ? aStock - bStock : bStock - aStock;
+                }
+                if (sortConfig.key === 'sold') {
+                    const aSold = calculateTotalSold(a.sizeStock);
+                    const bSold = calculateTotalSold(b.sizeStock);
+                    return sortConfig.direction === 'ascending' ? aSold - bSold : bSold - aSold;
+                }
                 if (a[sortConfig.key] < b[sortConfig.key]) {
                     return sortConfig.direction === 'ascending' ? -1 : 1
                 }
@@ -217,21 +249,21 @@ const List = ({ token }) => {
                 </div>
 
                 <div className="flex flex-col">
-                    <label className="font-semibold mb-1">Stock Range:</label>
+                    <label className="font-semibold mb-1">Total Stock Range:</label>
                     <div className="flex gap-2">
                         <input
                             type="number"
-                            name="minStock"
-                            value={minStock}
-                            onChange={handleStockChange}
+                            name="minTotalStock"
+                            value={minTotalStock}
+                            onChange={handleTotalStockChange}
                             placeholder="Min"
                             className="p-2 border rounded-md w-24"
                         />
                         <input
                             type="number"
-                            name="maxStock"
-                            value={maxStock}
-                            onChange={handleStockChange}
+                            name="maxTotalStock"
+                            value={maxTotalStock}
+                            onChange={handleTotalStockChange}
                             placeholder="Max"
                             className="p-2 border rounded-md w-24"
                         />
@@ -239,21 +271,21 @@ const List = ({ token }) => {
                 </div>
 
                 <div className="flex flex-col">
-                    <label className="font-semibold mb-1">Sold Range:</label>
+                    <label className="font-semibold mb-1">Total Sold Range:</label>
                     <div className="flex gap-2">
                         <input
                             type="number"
-                            name="minSold"
-                            value={minSold}
-                            onChange={handleSoldChange}
+                            name="minTotalSold"
+                            value={minTotalSold}
+                            onChange={handleTotalSoldChange}
                             placeholder="Min"
                             className="p-2 border rounded-md w-24"
                         />
                         <input
                             type="number"
-                            name="maxSold"
-                            value={maxSold}
-                            onChange={handleSoldChange}
+                            name="maxTotalSold"
+                            value={maxTotalSold}
+                            onChange={handleTotalSoldChange}
                             placeholder="Max"
                             className="p-2 border rounded-md w-24"
                         />
@@ -271,10 +303,10 @@ const List = ({ token }) => {
                         Price <ArrowUpDown className="ml-1 h-4 w-4" />
                     </button>
                     <button onClick={() => requestSort('stock')} className="flex items-center">
-                        Stock <ArrowUpDown className="ml-1 h-4 w-4" />
+                        Total Stock <ArrowUpDown className="ml-1 h-4 w-4" />
                     </button>
                     <button onClick={() => requestSort('sold')} className="flex items-center">
-                        Sold <ArrowUpDown className="ml-1 h-4 w-4" />
+                        Total Sold <ArrowUpDown className="ml-1 h-4 w-4" />
                     </button>
                     <span className='text-center'>Action</span>
                 </div>
@@ -298,8 +330,8 @@ const List = ({ token }) => {
                             <p className='text-gray-600'>{item.category}</p>
                             <p>{item.subCategory}</p>
                             <p>{currency}{item.price}</p>
-                            <p>{item.stock}</p>
-                            <p>{item.sold}</p>
+                            <p>Total Stock: {calculateTotalStock(item.sizeStock)}</p>
+                            <p>Total Sold: {calculateTotalSold(item.sizeStock)}</p>
                         </div>
 
                         <div className='hidden md:block relative group'>
@@ -318,8 +350,42 @@ const List = ({ token }) => {
                         <p className='hidden md:block'>{item.category}</p>
                         <p className='hidden md:block'>{item.subCategory}</p>
                         <p className='hidden md:block'>{currency}{item.price}</p>
-                        <p className='hidden md:block'>{item.stock}</p>
-                        <p className='hidden md:block'>{item.sold}</p>
+                        <div className='hidden md:block'>
+                            <div className="flex items-center justify-between">
+                                <span>{calculateTotalStock(item.sizeStock)}</span>
+                                <button onClick={() => toggleStockExpand(item._id)} className="ml-2">
+                                    {expandedStocks[item._id] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </button>
+                            </div>
+                            {expandedStocks[item._id] && (
+                                <div className="mt-2">
+                                    {item.sizeStock.map((size, idx) => (
+                                        <div key={idx} className="flex justify-between">
+                                            <span>{size.size}:</span>
+                                            <span>{size.stock}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className='hidden md:block'>
+                            <div className="flex items-center justify-between">
+                                <span>{calculateTotalSold(item.sizeStock)}</span>
+                                <button onClick={() => toggleSoldExpand(item._id)} className="ml-2">
+                                    {expandedSold[item._id] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </button>
+                            </div>
+                            {expandedSold[item._id] && (
+                                <div className="mt-2">
+                                    {item.sizeStock.map((size, idx) => (
+                                        <div key={idx} className="flex justify-between">
+                                            <span>{size.size}:</span>
+                                            <span>{size.sold}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <div className='flex gap-2 justify-center md:justify-start'>
                             <button
                                 onClick={() => setProductToEdit(item)}
@@ -372,3 +438,4 @@ const List = ({ token }) => {
 }
 
 export default List;
+
